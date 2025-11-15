@@ -61,11 +61,28 @@ Detaillierte Anleitung: Siehe [docs/SETUP.md](docs/SETUP.md)
 
 ## 🚀 Verwendung
 
-### GPIO-Button-Nutzung:
+### GPIO-Button-Nutzung (NEU!):
+
+**Hardware-Verkabelung:**
+- GPIO 17 (Pin 11): Join/Leave-Button
+- GPIO 23 (Pin 16): Grüne Status-LED
+- GPIO 24 (Pin 18): Rote Status-LED
+
+**Bedienung:**
 1. Raspberry Pi einschalten
-2. Warten bis grüne LED leuchtet (bereit)
-3. "Join"-Button drücken → Automatischer Beitritt zum Standard-Meeting
-4. Nach Meeting: "Leave"-Button drücken
+2. **Grüne LED leuchtet** → System bereit
+3. **Button drücken** → Gelbe LED → System tritt Meeting bei
+4. **Rote LED leuchtet** → Im Meeting aktiv
+5. **Button erneut drücken** → Gelbe LED → System verlässt Meeting
+6. **Grüne LED leuchtet** → Wieder bereit
+
+**LED-Status:**
+- 🟢 Grün = Bereit für Meeting
+- 🟡 Gelb (beide) = Trete bei / Verlasse
+- 🔴 Rot = Im Meeting
+- 🔴 Rot blinkend = Fehler
+
+**Detaillierte Anleitung:** [GPIO_SETUP.md](GPIO_SETUP.md)
 
 ### Web-Interface-Nutzung:
 1. Browser öffnen: `http://raspberrypi.local:8080`
@@ -162,7 +179,8 @@ python run_web.py
 
 ## 📖 Dokumentation
 
-- **[WEB_INTERFACE.md](WEB_INTERFACE.md)** - 🌐 **Web Admin Interface Guide** (NEU!)
+- **[GPIO_SETUP.md](GPIO_SETUP.md)** - 🔌 **GPIO Hardware-Setup & Verkabelung** (NEU!)
+- **[WEB_INTERFACE.md](WEB_INTERFACE.md)** - 🌐 **Web Admin Interface Guide**
 - **[RASPBERRY_PI_TEST.md](RASPBERRY_PI_TEST.md)** - 🎯 **Test-Anleitung für Raspberry Pi**
 - **[SETUP.md](docs/SETUP.md)** - Vollständige Installationsanleitung
 - **[HARDWARE.md](docs/HARDWARE.md)** - GPIO-Verkabelung und Hardware-Setup
