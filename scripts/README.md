@@ -163,13 +163,127 @@ Kiosk Display                      Stopped (Disabled)
 
 ---
 
+### `setup_audio.sh`
+
+Konfiguriert PulseAudio für optimale Audio-Qualität mit Konferenz-Freisprecheinrichtungen.
+
+**Verwendung:**
+
+```bash
+./scripts/setup_audio.sh
+```
+
+**Features:**
+- Interaktive Menü-Führung
+- Audio-Eingabegeräte (Mikrofone) auflisten
+- Audio-Ausgabegeräte (Lautsprecher) auflisten
+- Default-Devices manuell setzen
+- Audio-Tests (Aufnahme/Wiedergabe)
+- Netzwerk-Audio-Konfiguration (optional)
+
+**Menü-Optionen:**
+```
+Audio/Video Setup Menu
+========================================
+  1) List audio input devices (microphones)
+  2) List audio output devices (speakers)
+  3) Set default input device
+  4) Set default output device
+  5) Test speakers
+  6) Test microphone
+  7) Show video devices
+  8) Configure network audio (advanced)
+  9) Exit
+```
+
+---
+
+### `pair_bluetooth.sh`
+
+Wizard für Pairing von Bluetooth-Konferenz-Freisprecheinrichtungen.
+
+**Verwendung:**
+
+```bash
+./scripts/pair_bluetooth.sh
+```
+
+**Features:**
+- Auto-Pair Wizard (empfohlener Flow)
+- Device-Scanning mit bluetoothctl
+- Trust/Pair/Connect-Sequenz
+- PulseAudio-Modul-Laden
+- Verbindungs-Status anzeigen
+- Connect/Disconnect/Remove-Operationen
+
+**Auto-Pair Flow:**
+```
+Bluetooth Pairing Menu
+========================================
+  1) Auto-pair wizard (recommended)
+  2) Show paired devices
+  3) Connect to device
+  4) Disconnect device
+  5) Remove device
+  6) Scan for devices
+  7) Exit
+```
+
+---
+
+### `test_audio_video.py`
+
+Testet Audio- und Video-Hardware umfassend.
+
+**Verwendung:**
+
+```bash
+python scripts/test_audio_video.py
+```
+
+**Was wird getestet:**
+1. PulseAudio-Verfügbarkeit
+2. Audio-Eingabegeräte (Mikrofone)
+3. Audio-Ausgabegeräte (Lautsprecher)
+4. Video-Geräte (Webcams)
+5. Bevorzugte Konferenz-Geräte (Jabra, Anker, eMeet, etc.)
+6. Default-Device-Konfiguration
+7. Auto-Konfiguration
+
+**Ausgabe:**
+```
+🧪 RaspberryMeet Audio/Video Hardware Test
+====================================================================
+
+🎤 Audio Device Test
+====================================================================
+✅ PulseAudio is available
+
+Audio Input Devices (Microphones):
+--------------------------------------------------------------------
+  ✓ Jabra Speak 510 [DEFAULT]
+    Built-in Audio Analog Stereo
+
+Audio Output Devices (Speakers):
+--------------------------------------------------------------------
+  ✓ Jabra Speak 510 [DEFAULT]
+    HDMI Audio
+
+📹 Video Device Test
+====================================================================
+Found 1 webcam(s):
+  1. Logitech HD Pro Webcam C920
+     Device: /dev/video0
+
+✅ Video devices detected successfully
+```
+
+---
+
 ## Weitere Scripts (geplant)
 
 - `install.sh` - Automatische Installation und Setup
-- `setup_audio.sh` - PulseAudio-Konfiguration
 - `setup_display.sh` - X11/Kiosk-Modus-Setup
-- `pair_bluetooth.sh` - Bluetooth-Freisprecheinrichtung-Pairing
-- `test_hardware.sh` - Hardware-Test-Utility
 - `update.sh` - Update-Deployment
 
 ---

@@ -10,6 +10,7 @@ from typing import Optional
 
 from src.orchestrator.browser_controller import BrowserController
 from src.orchestrator.gpio_handler import GPIOHandler, LEDState
+from src.orchestrator.audio_manager import AudioVideoManager
 from src.utils.config import AppConfig
 from src.utils.logger import setup_logger
 
@@ -45,6 +46,7 @@ class MeetingManager:
         # Components
         self.browser: Optional[BrowserController] = None
         self.gpio: Optional[GPIOHandler] = None
+        self.audio: Optional[AudioVideoManager] = None
 
         # State
         self.state = MeetingState.IDLE
@@ -59,6 +61,14 @@ class MeetingManager:
     async def start(self):
         """Start the meeting manager and initialize components."""
         logger.info("Starting meeting manager...")
+
+        # Initialize audio/video manager and configure devices
+        logger.info("Configuring audio/video devices...")
+        self.audio = AudioVideoManager()
+        if self.audio.configure_audio():
+            logger.info("Audio devices configured successfully")
+        else:
+            logger.warning("Audio configuration failed or not needed")
 
         # Initialize browser controller
         self.browser = BrowserController(
@@ -97,6 +107,9 @@ class MeetingManager:
 
         if self.gpio:
             self.gpio.cleanup()
+
+        if self.audio:
+            self.audio.cleanup()
 
         logger.info("Meeting manager stopped")
 
