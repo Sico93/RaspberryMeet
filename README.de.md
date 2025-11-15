@@ -106,8 +106,38 @@ buttons:
 
 Weitere Konfigurationsoptionen: Siehe [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
 
+## 🧪 Aktuellen Stand auf Raspberry Pi testen
+
+**Schnellanleitung zum Testen der BBB-Automation:**
+
+📋 **[RASPBERRY_PI_TEST.md](RASPBERRY_PI_TEST.md)** - Schritt-für-Schritt Anleitung zum Testen auf dem Raspberry Pi
+
+**Kurzfassung:**
+```bash
+# 1. Repository klonen
+git clone https://github.com/Sico93/RaspberryMeet.git
+cd RaspberryMeet
+git checkout claude/claude-md-mi0ls28jefrj31gk-01Fy51p4K9pYPy9KWyM2Uw6R
+
+# 2. Dependencies installieren
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+playwright install chromium
+
+# 3. Konfigurieren
+cp .env.example .env
+nano .env  # BBB_DEFAULT_ROOM_URL anpassen
+
+# 4. Demo starten
+python demo_bbb_join.py
+```
+
+Der Browser sollte automatisch Ihren BBB-Raum öffnen und beitreten!
+
 ## 📖 Dokumentation
 
+- **[RASPBERRY_PI_TEST.md](RASPBERRY_PI_TEST.md)** - 🎯 **Test-Anleitung für Raspberry Pi** (JETZT VERFÜGBAR)
 - **[SETUP.md](docs/SETUP.md)** - Vollständige Installationsanleitung
 - **[HARDWARE.md](docs/HARDWARE.md)** - GPIO-Verkabelung und Hardware-Setup
 - **[CALDAV_SETUP.md](docs/CALDAV_SETUP.md)** - Kalender-Integration einrichten
