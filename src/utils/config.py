@@ -46,6 +46,7 @@ class WebConfig(BaseModel):
     username: str = Field(default="admin", description="Admin username")
     password: str = Field(default="admin", description="Admin password")
     secret_key: str = Field(default="change-me", description="JWT secret key")
+    headless_browser: bool = Field(default=False, description="Run browser in headless mode")
 
 
 class GPIOConfig(BaseModel):
@@ -123,6 +124,7 @@ def load_config() -> AppConfig:
         username=os.getenv("WEB_USERNAME", "admin"),
         password=os.getenv("WEB_PASSWORD", "admin"),
         secret_key=os.getenv("WEB_SECRET_KEY", "change-me"),
+        headless_browser=os.getenv("WEB_HEADLESS_BROWSER", "false").lower() == "true",
     )
 
     # Build GPIO config

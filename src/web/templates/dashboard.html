@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RaspberryMeet Admin</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🍓 RaspberryMeet</div>
+            <div class="user-info">
+                <div class="user-icon">{{ username[0].upper() }}</div>
+                <span>{{ username }}</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container">
+        <!-- Status Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Meeting Status</h2>
+                <div id="status-badge">
+                    {% include 'partials/status_badge.html' %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="status-grid" id="status-info">
+                    {% include 'partials/status_info.html' %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Join Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Schnellzugriff</h2>
+            </div>
+            <div class="card-body">
+                <div id="quick-actions">
+                    {% include 'partials/quick_actions.html' %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Join Card -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Benutzerdefinierter Raum</h2>
+            </div>
+            <div class="card-body">
+                <form hx-post="/api/meeting/join"
+                      hx-trigger="submit"
+                      hx-target="#join-result"
+                      hx-swap="innerHTML"
+                      hx-indicator="#join-spinner">
+
+                    <div class="form-group">
+                        <label class="form-label" for="room-url">BBB Raum-URL</label>
+                        <input type="url"
+                               id="room-url"
+                               name="room_url"
+                               class="form-input"
+                               placeholder="https://bbb.example.eu/b/raum-name"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="username">Benutzername (optional)</label>
+                        <input type="text"
+                               id="username"
+                               name="username"
+                               class="form-input"
+                               placeholder="{{ config.bbb.default_username }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="password">Raum-Passwort (optional)</label>
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               class="form-input"
+                               placeholder="Falls erforderlich">
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span id="join-spinner" class="spinner htmx-indicator"></span>
+                        Raum beitreten
+                    </button>
+                </form>
+
+                <div id="join-result" class="fade-in" style="margin-top: 1rem;"></div>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div class="info-box">
+            <p>
+                <strong>💡 Tipp:</strong> Sie können auch GPIO-Buttons am Raspberry Pi verwenden,
+                um dem Standard-Meeting beizutreten.
+            </p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>RaspberryMeet v0.1.0 | BigBlueButton Meeting Client für Raspberry Pi</p>
+    </footer>
+
+    <!-- WebSocket Status Updates -->
+    <script>
+        // WebSocket connection for real-time status updates
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/status`;
+        let ws = null;
+        let reconnectTimeout = null;
+
+        function connectWebSocket() {
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                console.log('WebSocket connected');
+                clearTimeout(reconnectTimeout);
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log('Status update:', data);
+
+                // Update status badge
+                updateStatusBadge(data.state);
+
+                // Update status info
+                updateStatusInfo(data);
+
+                // Update quick actions
+                updateQuickActions(data.state);
+            };
+
+            ws.onclose = function() {
+                console.log('WebSocket disconnected, reconnecting in 5s...');
+                reconnectTimeout = setTimeout(connectWebSocket, 5000);
+            };
+
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function updateStatusBadge(state) {
+            const badge = document.getElementById('status-badge');
+            const stateLabels = {
+                'idle': 'Bereit',
+                'joining': 'Trete bei...',
+                'active': 'Im Meeting',
+                'leaving': 'Verlasse...',
+                'error': 'Fehler'
+            };
+
+            badge.innerHTML = `
+                <div class="status-badge ${state}">
+                    <div class="status-dot ${state}"></div>
+                    ${stateLabels[state] || state}
+                </div>
+            `;
+        }
+
+        function updateStatusInfo(data) {
+            const statusInfo = document.getElementById('status-info');
+            const duration = data.duration ? formatDuration(data.duration) : '-';
+            const roomDisplay = data.current_room ?
+                data.current_room.substring(0, 50) + (data.current_room.length > 50 ? '...' : '') :
+                '-';
+
+            statusInfo.innerHTML = `
+                <div class="status-item">
+                    <div class="status-label">Status</div>
+                    <div class="status-value">${getStateLabel(data.state)}</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Aktueller Raum</div>
+                    <div class="status-value" style="font-size: 0.875rem;">${roomDisplay}</div>
+                </div>
+                <div class="status-item">
+                    <div class="status-label">Meeting-Dauer</div>
+                    <div class="status-value">${duration}</div>
+                </div>
+            `;
+        }
+
+        function updateQuickActions(state) {
+            const actions = document.getElementById('quick-actions');
+
+            if (state === 'idle' || state === 'error') {
+                actions.innerHTML = `
+                    <button hx-post="/api/meeting/join-default"
+                            hx-trigger="click"
+                            hx-target="#join-result"
+                            hx-indicator="#default-spinner"
+                            class="btn btn-success btn-lg btn-block">
+                        <span id="default-spinner" class="spinner htmx-indicator"></span>
+                        🚀 Standard-Meeting beitreten
+                    </button>
+                `;
+            } else if (state === 'active') {
+                actions.innerHTML = `
+                    <button hx-post="/api/meeting/leave"
+                            hx-trigger="click"
+                            hx-target="#join-result"
+                            hx-indicator="#leave-spinner"
+                            class="btn btn-danger btn-lg btn-block">
+                        <span id="leave-spinner" class="spinner htmx-indicator"></span>
+                        👋 Meeting verlassen
+                    </button>
+                `;
+            } else {
+                actions.innerHTML = `
+                    <button class="btn btn-secondary btn-lg btn-block" disabled>
+                        <span class="spinner"></span>
+                        Bitte warten...
+                    </button>
+                `;
+            }
+
+            // Re-process htmx for new elements
+            htmx.process(actions);
+        }
+
+        function getStateLabel(state) {
+            const labels = {
+                'idle': 'Bereit',
+                'joining': 'Trete bei',
+                'active': 'Im Meeting',
+                'leaving': 'Verlasse',
+                'error': 'Fehler'
+            };
+            return labels[state] || state;
+        }
+
+        function formatDuration(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+
+            if (hours > 0) {
+                return `${hours}h ${minutes}m ${secs}s`;
+            } else if (minutes > 0) {
+                return `${minutes}m ${secs}s`;
+            } else {
+                return `${secs}s`;
+            }
+        }
+
+        // Handle htmx responses
+        document.body.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.successful) {
+                const response = JSON.parse(event.detail.xhr.responseText);
+                const resultDiv = document.getElementById('join-result');
+
+                if (response.success) {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            ✅ ${response.message}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-error">
+                            ❌ ${response.message}
+                        </div>
+                    `;
+                }
+
+                // Clear message after 5 seconds
+                setTimeout(() => {
+                    resultDiv.innerHTML = '';
+                }, 5000);
+            }
+        });
+
+        // Connect WebSocket on page load
+        connectWebSocket();
+    </script>
+</body>
+</html>
