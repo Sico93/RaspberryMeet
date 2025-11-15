@@ -135,9 +135,35 @@ python demo_bbb_join.py
 
 Der Browser sollte automatisch Ihren BBB-Raum öffnen und beitreten!
 
+## 🌐 Web Admin Interface (NEU!)
+
+**Steuern Sie Meetings über Ihren Browser im lokalen Netzwerk!**
+
+📋 **[WEB_INTERFACE.md](WEB_INTERFACE.md)** - Vollständige Web-Interface-Dokumentation
+
+**Schnellstart Web-Interface:**
+```bash
+# Nach Installation (siehe oben):
+python run_web.py
+
+# Im Browser öffnen:
+# http://raspberrypi.local:8080
+# Benutzername: admin
+# Passwort: (aus .env konfigurieren)
+```
+
+**Features:**
+- 🚀 Ein-Klick-Join zum Standard-Meeting
+- 🔗 Benutzerdefinierte BBB-Raum-URLs
+- 📊 Echtzeit-Status mit WebSocket
+- ⏱️ Live Meeting-Dauer
+- 📱 Mobile-responsive
+- 🔐 Passwortgeschützt
+
 ## 📖 Dokumentation
 
-- **[RASPBERRY_PI_TEST.md](RASPBERRY_PI_TEST.md)** - 🎯 **Test-Anleitung für Raspberry Pi** (JETZT VERFÜGBAR)
+- **[WEB_INTERFACE.md](WEB_INTERFACE.md)** - 🌐 **Web Admin Interface Guide** (NEU!)
+- **[RASPBERRY_PI_TEST.md](RASPBERRY_PI_TEST.md)** - 🎯 **Test-Anleitung für Raspberry Pi**
 - **[SETUP.md](docs/SETUP.md)** - Vollständige Installationsanleitung
 - **[HARDWARE.md](docs/HARDWARE.md)** - GPIO-Verkabelung und Hardware-Setup
 - **[CALDAV_SETUP.md](docs/CALDAV_SETUP.md)** - Kalender-Integration einrichten
