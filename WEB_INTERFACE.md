@@ -229,18 +229,42 @@ http://raspberrypi.local:8080
 
 ## Sicherheit
 
-### Passwort ändern
+### Passwort ändern (mit Hash)
 
 **Wichtig:** Ändern Sie das Standard-Passwort!
 
+**Empfohlen: Verwenden Sie einen SHA-256 Hash** (nicht Klartext):
+
 ```bash
+# 1. Hash für Ihr Passwort generieren
+python scripts/hash_password.py
+
+# Das Script fragt nach Ihrem Passwort und generiert einen Hash
+# Beispiel-Ausgabe:
+# WEB_PASSWORD=sha256:abc123def456...
+
+# 2. .env-Datei bearbeiten
 nano .env
+
+# 3. Den generierten Hash einfügen
+WEB_PASSWORD=sha256:abc123def456...
 ```
 
-Ändern Sie:
+**Warum gehashte Passwörter?**
+- ✅ Passwort wird nicht im Klartext gespeichert
+- ✅ Sicherer bei Backup-Zugriff oder Log-Leaks
+- ✅ SHA-256 ist ein sicherer Hash-Algorithmus
+- ✅ Backwards-kompatibel (Klartext funktioniert weiterhin)
+
+**Alternative: Klartext-Passwort** (weniger sicher):
+
 ```bash
+nano .env
+# Ändern Sie:
 WEB_PASSWORD=ihr-sicheres-passwort-hier
 ```
+
+⚠️ **Hinweis:** Bei Klartext-Passwörtern wird beim Start eine Warnung geloggt.
 
 ### HTTPS aktivieren (optional)
 
