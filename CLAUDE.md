@@ -16,6 +16,7 @@
 **Core Functionality:**
 - **One-Button Join:** GPIO button press joins preconfigured BigBlueButton room
 - **Calendar Integration:** Automatic meeting joins based on CalDAV calendar invitations
+- **Web Admin Interface:** Local network access for remote meeting control and configuration
 - **Hands-Free Operation:** No keyboard/mouse required for standard workflows
 - **Privacy-First:** Open source components, EU-based hosting (no USA/China services)
 
@@ -47,6 +48,7 @@ This is a brand new project. The following components need to be implemented:
 - **Audio/Video Manager:** PulseAudio/ALSA configuration for conference speakerphone
 - **Auto-Join Logic:** Automatic meeting detection and browser automation
 - **Configuration Management:** Room credentials, BBB server URLs, default meeting settings
+- **Web Admin Interface:** Local network web UI for triggering meetings and configuration
 - **Systemd Services:** Boot-time initialization and service management
 
 ### Hardware Components
@@ -77,6 +79,7 @@ This is a brand new project. The following components need to be implemented:
 
 **Orchestration Layer:**
 - **Python 3.11+** for meeting orchestrator service
+- **FastAPI** for web admin interface and REST API
 - **gpiozero** for GPIO button/LED control
 - **caldav** library for CalDAV calendar integration
 - **selenium** or **playwright** for browser automation
@@ -146,11 +149,23 @@ This is a brand new project. The following components need to be implemented:
 - **Encrypted credentials** storage (keyring or encrypted config)
 - **Network isolation** option (no internet except BBB server)
 
+### Web Admin Interface
+- **FastAPI** backend for REST API and web serving
+- **Simple HTML/CSS/JS** frontend (no build process)
+- **htmx** for interactive updates without JavaScript frameworks
+- **Authentication:** Basic Auth initially, JWT tokens later
+- **Features:**
+  - Trigger meeting joins via web buttons
+  - View current meeting status
+  - Configure BBB room URLs and credentials
+  - View system logs and diagnostics
+  - Manual calendar sync trigger
+
 ### Container & Deployment
 - **NO Docker** (direct install for better hardware access and lower overhead)
 - **systemd** for service management
 - **Ansible** or **bash scripts** for reproducible deployment
-- **SD card image** for fleet deployment (future consideration)
+- **SD card image** for fleet deployment (bonus feature, later phase)
 
 ---
 
@@ -171,6 +186,17 @@ RaspberryMeet/
 │   │   ├── gpio_handler.py             # Button/LED GPIO control
 │   │   ├── audio_manager.py            # PulseAudio device configuration
 │   │   └── config.py                   # Configuration management
+│   ├── web/                            # Web admin interface
+│   │   ├── __init__.py
+│   │   ├── api.py                      # FastAPI routes
+│   │   ├── auth.py                     # Authentication middleware
+│   │   ├── static/                     # Static files (CSS, JS)
+│   │   │   ├── style.css
+│   │   │   └── app.js
+│   │   └── templates/                  # HTML templates
+│   │       ├── index.html
+│   │       ├── meetings.html
+│   │       └── settings.html
 │   ├── models/                         # Data models
 │   │   ├── __init__.py
 │   │   ├── meeting.py                  # Meeting representation
@@ -196,6 +222,7 @@ RaspberryMeet/
 │   └── audio_devices.yaml              # Audio device preferences
 ├── systemd/
 │   ├── raspberrymeet.service           # Main orchestrator service
+│   ├── raspberrymeet-web.service       # Web admin interface
 │   ├── raspberrymeet-kiosk.service     # Chromium kiosk launcher
 │   └── raspberrymeet-setup.service     # One-time setup on boot
 ├── scripts/
@@ -787,6 +814,8 @@ Before implementing features, consider asking:
 - **Auto-Join Behavior:** On boot, or wait for button/calendar?
 - **Language:** German UI, English UI, or both?
 - **Network:** Static IP or DHCP? WiFi or Ethernet?
+- **Web Interface:** Which port (default 8080)? Authentication method (Basic Auth, JWT)?
+- **Web Features Priority:** What should be in MVP vs. later versions?
 
 ---
 

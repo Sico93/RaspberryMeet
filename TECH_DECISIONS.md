@@ -479,12 +479,155 @@ sudo ufw enable
 
 ---
 
+## 16. Web-Framework: FastAPI
+
+**Entscheidung:** FastAPI statt Flask oder Django
+
+**Vergleich:**
+
+| Kriterium | FastAPI | Flask | Django |
+|-----------|---------|-------|--------|
+| Performance | ⭐⭐⭐⭐⭐ Async, schnell | ⭐⭐⭐ Synchron | ⭐⭐⭐ Synchron, schwerer |
+| Async Support | ⭐⭐⭐⭐⭐ Native | ⭐⭐⭐ Mit Quart | ⭐⭐⭐ Mit Channels |
+| API-First | ⭐⭐⭐⭐⭐ Built-in | ⭐⭐⭐ Manuell | ⭐⭐ REST Framework nötig |
+| Auto-Docs | ⭐⭐⭐⭐⭐ OpenAPI/Swagger | ⭐ Manuell | ⭐ Manuell |
+| Type Hints | ⭐⭐⭐⭐⭐ Required | ⭐⭐ Optional | ⭐⭐ Optional |
+| Lernkurve | ⭐⭐⭐⭐ Einfach | ⭐⭐⭐⭐⭐ Sehr einfach | ⭐⭐ Komplex |
+| Overhead | ⭐⭐⭐⭐ Klein | ⭐⭐⭐⭐⭐ Minimal | ⭐⭐ Groß |
+| WebSocket | ⭐⭐⭐⭐⭐ Built-in | ⭐⭐ Extension | ⭐⭐⭐ Channels |
+
+**Begründung:**
+- **Async-First:** Passt perfekt zu asyncio-basierten Orchestrator
+- **Type Safety:** Pydantic-Integration für validierte Config/Requests
+- **Auto-Documentation:** `/docs` Endpoint mit Swagger UI automatisch
+- **Modern:** Aktiv entwickelt, zukunftssicher
+- **Lightweight:** Kein ORM-Overhead (brauchen wir nicht)
+- **WebSocket Support:** Für zukünftige Real-Time-Updates
+
+**Frontend-Strategie:**
+- **Jinja2 Templates:** Server-Side-Rendering für HTML
+- **htmx:** Partial-Page-Updates ohne Full-JavaScript-Framework
+- **Alpine.js** (optional): Minimales JavaScript für Interaktivität
+- **No Build Step:** Direkte Entwicklung ohne npm/webpack
+
+**Beispiel-API:**
+```python
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class MeetingJoinRequest(BaseModel):
+    room_url: str
+    username: str = "RaspberryMeet"
+
+@app.get("/api/status")
+async def get_status():
+    """Aktueller Meeting-Status"""
+    return {
+        "state": "idle",  # idle, joining, active
+        "current_meeting": None,
+        "uptime": 3600
+    }
+
+@app.post("/api/meeting/join")
+async def join_meeting(request: MeetingJoinRequest):
+    """Meeting beitreten"""
+    # Trigger orchestrator via IPC
+    await meeting_manager.join(request.room_url, request.username)
+    return {"status": "joining"}
+```
+
+**htmx-Beispiel:**
+```html
+<!-- Dashboard mit Auto-Refresh -->
+<div hx-get="/api/status" hx-trigger="every 2s" hx-swap="innerHTML">
+  <p>Status: <span id="state">Lädt...</span></p>
+</div>
+
+<!-- Quick-Join-Button -->
+<button
+  hx-post="/api/meeting/join"
+  hx-vals='{"room_url": "https://bbb.example.eu/b/default-room"}'
+  class="btn-primary">
+  Standard-Meeting beitreten
+</button>
+```
+
+**Warum nicht Flask:**
+- Kein eingebauter Async-Support (müsste Quart verwenden)
+- OpenAPI-Docs müssten manuell erstellt werden
+- Mehr Boilerplate für REST-API
+
+**Warum nicht Django:**
+- Zu schwer für Use-Case (ORM, Admin-Panel nicht nötig)
+- Längere Startzeit (wichtig für Embedded-System)
+- Komplexere Konfiguration
+
+**Authentication-Strategie:**
+
+**Phase 1 (Initial):**
+```python
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import secrets
+
+security = HTTPBasic()
+
+@app.get("/admin")
+async def admin_panel(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, "admin")
+    correct_password = secrets.compare_digest(credentials.password, os.getenv("WEB_PASSWORD"))
+    if not (correct_username and correct_password):
+        raise HTTPException(status_code=401)
+    return templates.TemplateResponse("admin.html", {"request": request})
+```
+
+**Phase 2 (Später):**
+- JWT Tokens mit `python-jose`
+- Session-basierte Auth
+- Optional: OAuth2 (für Multi-User)
+
+---
+
+## 17. Frontend-Library: htmx
+
+**Entscheidung:** htmx statt React/Vue/Vanilla JS
+
+**Begründung:**
+- **Kein Build-Prozess:** Direktes HTML + `<script src="htmx.min.js">`
+- **Server-Side-Rendering:** SEO-freundlich, schnelles Initial-Load
+- **Weniger Komplexität:** Kein npm, webpack, babel, etc.
+- **Progressives Enhancement:** Funktioniert auch ohne JavaScript
+- **Kleine Größe:** ~14KB minified+gzipped
+
+**Alternativen erwogen:**
+
+**React/Vue:**
+- ❌ Build-Prozess notwendig (npm, webpack)
+- ❌ Mehr Komplexität für einfachen Admin-UI
+- ❌ Größerer Download (~40KB+ gzipped)
+- ✅ Bessere Component-Architektur (nicht nötig hier)
+
+**Vanilla JavaScript:**
+- ✅ Kein Framework nötig
+- ❌ Mehr Boilerplate für AJAX-Requests
+- ❌ Manuelles DOM-Management
+
+**Alpine.js:**
+- ✅ Sehr klein (~15KB)
+- ✅ Reaktive Daten-Binding
+- ⚖️ Kombinierbar mit htmx (für komplexere Interaktionen)
+
+**Entscheidung:** htmx als Basis, Alpine.js optional für komplexe UI-Komponenten
+
+---
+
 ## Zusammenfassung: Tech-Stack
 
 ```
 ┌─────────────────────────────────────────┐
 │         User Interaction                │
-│  (GPIO-Button, CalDAV-Kalender)         │
+│  (GPIO-Button, CalDAV-Kalender, Web-UI) │
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
@@ -493,35 +636,37 @@ sudo ufw enable
 │   - Meeting Manager                     │
 │   - GPIO Handler (gpiozero)             │
 │   - Calendar Sync (caldav)              │
-└──┬────────┬─────────┬────────────────┬──┘
-   │        │         │                │
-   │        │         │                │
-   ▼        ▼         ▼                ▼
-┌──────┐ ┌──────┐ ┌──────────┐  ┌──────────┐
-│ GPIO │ │CalDAV│ │Playwright│  │PulseAudio│
-│Buttons│ │Server│ │(Browser) │  │(Audio)   │
-│ LEDs │ │      │ │          │  │          │
-└──────┘ └──────┘ └─────┬────┘  └─────┬────┘
-                         │             │
-                         ▼             ▼
-                  ┌────────────┐  ┌─────────┐
-                  │  Chromium  │  │Speakerphone│
-                  │  (Kiosk)   │  │Webcam   │
-                  └─────┬──────┘  └────┬────┘
-                        │              │
-                        ▼              ▼
-                  ┌──────────────────────┐
-                  │  BigBlueButton       │
-                  │  Server (extern)     │
-                  └──────────────────────┘
+│   - FastAPI Web Server                  │
+└──┬────────┬─────────┬────────┬──────┬───┘
+   │        │         │        │      │
+   │        │         │        │      │
+   ▼        ▼         ▼        ▼      ▼
+┌──────┐ ┌──────┐ ┌──────┐ ┌────┐ ┌────────┐
+│ GPIO │ │CalDAV│ │Playwright│PulseAudio│Web    │
+│Buttons│ │Server│ │(Browser)││(Audio)   │Browser│
+│ LEDs │ │      │ │        ││          │(Admin)│
+└──────┘ └──────┘ └───┬────┘└────┬─────┘────┘
+                      │          │
+                      ▼          ▼
+               ┌────────────┐ ┌─────────┐
+               │  Chromium  │ │Speakerphone│
+               │  (Kiosk)   │ │Webcam   │
+               └─────┬──────┘ └────┬────┘
+                     │             │
+                     ▼             ▼
+               ┌──────────────────────┐
+               │  BigBlueButton       │
+               │  Server (extern)     │
+               └──────────────────────┘
 ```
 
-**Sprachen:** Python (Orchestrator), Bash (Scripts), YAML (Config)
-**Frameworks:** Playwright (Browser), gpiozero (GPIO), caldav (Kalender)
+**Sprachen:** Python (Orchestrator + Web), Bash (Scripts), YAML (Config), HTML/CSS/JS (Web-UI)
+**Frameworks:** FastAPI (Web), Playwright (Browser), gpiozero (GPIO), caldav (Kalender), htmx (Frontend)
 **Services:** systemd, PulseAudio, Chromium, Xorg
 **Infrastruktur:** Raspberry Pi 4, BigBlueButton-Server (extern), CalDAV-Server (extern/lokal)
 
 ---
 
 **Letzte Aktualisierung:** 2025-11-15
-**Nächste Review:** Nach Phase 1 Implementation (siehe IMPLEMENTATION_PLAN.md)
+**Änderungen:** Web-Admin-Interface (FastAPI + htmx) hinzugefügt
+**Nächste Review:** Nach Phase 7 Implementation (Web-UI fertig)

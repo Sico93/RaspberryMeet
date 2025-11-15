@@ -14,12 +14,14 @@ Ein Raspberry Pi 4 System, das per GPIO-Button oder automatisch über Kalenderei
 **Kernfunktionen:**
 1. **GPIO-Button → Standard-Meeting:** Ein Knopfdruck = sofortiger Beitritt zum konfigurierten BBB-Raum
 2. **Kalender-Integration:** Automatisches Beitreten zu Meetings basierend auf CalDAV-Einladungen
-3. **Hardware-Optimiert:** Konferenzspinne als Standard-Audio, USB-Webcam automatisch erkannt
-4. **Privacy-First:** Nur Open Source, EU-gehostete Services, keine USA/China-Dienste
+3. **Web-Admin-Interface:** Lokale Web-UI für Meeting-Steuerung und Konfiguration aus dem Netzwerk
+4. **Hardware-Optimiert:** Konferenzspinne als Standard-Audio, USB-Webcam automatisch erkannt
+5. **Privacy-First:** Nur Open Source, EU-gehostete Services, keine USA/China-Dienste
 
 **Technologie-Stack:**
 - **Browser:** Chromium im Kiosk-Modus (Vollbild, keine UI)
 - **Automatisierung:** Python + Playwright/Selenium für Browser-Steuerung
+- **Web-Backend:** FastAPI für REST API und Web-Interface
 - **Hardware:** gpiozero für GPIO-Buttons und LEDs
 - **Kalender:** CalDAV-Client (Nextcloud/Radicale kompatibel)
 - **Audio:** PulseAudio mit automatischer Speakerphone-Erkennung
@@ -199,22 +201,66 @@ Ein Raspberry Pi 4 System, das per GPIO-Button oder automatisch über Kalenderei
 
 ---
 
-### Phase 7: Testing & Documentation (Woche 7-8)
+### Phase 7: Web Admin Interface (Woche 7)
+**Ziel:** Lokales Web-Interface für Meeting-Steuerung und Konfiguration
+
+#### 7.1 FastAPI Backend Setup
+- [ ] FastAPI Installation und Basis-Setup
+- [ ] REST API Endpoints für Meeting-Kontrolle
+  - `GET /api/status` - Aktueller Meeting-Status
+  - `POST /api/meeting/join` - Meeting beitreten (mit URL/Room-ID)
+  - `POST /api/meeting/leave` - Meeting verlassen
+  - `GET /api/config` - Konfiguration abrufen
+  - `PUT /api/config` - Konfiguration aktualisieren
+- [ ] Integration mit Meeting Manager (IPC oder Shared State)
+- [ ] CORS-Konfiguration für lokales Netzwerk
+
+#### 7.2 Frontend Implementation
+- [ ] Simple HTML/CSS/JS Templates (Jinja2)
+  - Dashboard: Meeting-Status, Quick-Join-Buttons
+  - Meetings: Konfigurierte Räume, Kalender-Übersicht
+  - Settings: BBB-URLs, CalDAV-Credentials, GPIO-Pins
+  - Logs: System-Logs und Meeting-Historie
+- [ ] htmx für dynamische Updates ohne Full-Reload
+- [ ] Responsive Design (Desktop + Tablet/Handy)
+- [ ] Deutsches UI (optional: Sprachumschaltung)
+
+#### 7.3 Authentication & Security
+- [ ] HTTP Basic Auth (initialer Schutz)
+- [ ] Konfigurierbare Credentials in .env
+- [ ] IP-Whitelist für vertrauenswürdige Netzwerke (optional)
+- [ ] HTTPS mit selbstsigniertem Zertifikat (optional)
+
+#### 7.4 Systemd Service Integration
+- [ ] `raspberrymeet-web.service` erstellen
+- [ ] Service läuft auf Port 8080 (konfigurierbar)
+- [ ] Auto-Start beim Boot
+- [ ] Health-Check-Endpoint für Monitoring
+
+**Deliverables:**
+- Web-Interface unter `http://raspberrypi.local:8080` erreichbar
+- Meeting-Join aus Web-UI funktioniert
+- Basic Auth schützt Admin-Funktionen
+- Service läuft stabil im Hintergrund
+
+---
+
+### Phase 8: Testing & Documentation (Woche 8)
 **Ziel:** Qualitätssicherung und vollständige Dokumentation
 
-#### 7.1 Automated Testing
+#### 8.1 Automated Testing
 - [ ] Unit Tests für Meeting Manager
 - [ ] Mock-Tests für GPIO (ohne Hardware)
 - [ ] Integration Tests für CalDAV
 - [ ] Browser-Automation Tests mit Dummy-BBB-Server
 
-#### 7.2 Hardware Testing
+#### 8.2 Hardware Testing
 - [ ] Test auf echtem Raspberry Pi 4
 - [ ] Verschiedene Konferenzspinnen testen
 - [ ] Bluetooth vs. USB Speakerphone
 - [ ] Langzeit-Stabilitätstest (24h Dauerbetrieb)
 
-#### 7.3 Documentation
+#### 8.3 Documentation
 - [ ] `docs/SETUP.md` - Vollständige Installationsanleitung
 - [ ] `docs/HARDWARE.md` - GPIO-Verkabelung mit Fotos
 - [ ] `docs/CALDAV_SETUP.md` - Nextcloud/Radicale Konfiguration
@@ -228,22 +274,22 @@ Ein Raspberry Pi 4 System, das per GPIO-Button oder automatisch über Kalenderei
 
 ---
 
-### Phase 8: Deployment & Finalisierung (Woche 8)
+### Phase 9: Deployment & Finalisierung (Woche 9)
 **Ziel:** Produktionsreifes System für Rollout
 
-#### 8.1 Installation Script
+#### 9.1 Installation Script
 - [ ] `scripts/install.sh` - Ein-Klick-Installation
 - [ ] Automatische Dependency-Installation
 - [ ] Initiale Config-Generierung (interaktiv)
 - [ ] Systemd-Service-Aktivierung
 
-#### 8.2 SD Card Image (Optional)
+#### 9.2 SD Card Image (Bonus Feature)
 - [ ] Pre-configured Raspberry Pi OS Image
 - [ ] Alle Dependencies vorinstalliert
 - [ ] Nur Credentials müssen konfiguriert werden
 - [ ] Image-Dokumentation und Checksums
 
-#### 8.3 Security Audit
+#### 9.3 Security Audit
 - [ ] Credentials niemals in Git
 - [ ] Minimale Berechtigungen für Services
 - [ ] Firewall-Regeln (nur BBB + CalDAV erreichbar)
@@ -429,20 +475,26 @@ User/System          Orchestrator        GPIO Handler       Browser         BBB 
 
 ## Erfolgs-Kriterien
 
-**Minimum Viable Product (MVP):**
-- [x] GPIO-Button startet BBB-Meeting (Standard-Raum)
-- [x] LED zeigt Meeting-Status an
-- [x] Audio/Video funktioniert automatisch
-- [x] System startet automatisch nach Boot
-- [x] Keine Tastatur/Maus nötig für Standard-Workflow
+**Minimum Viable Product (MVP) - Phase 1-6:**
+- [ ] GPIO-Button startet BBB-Meeting (Standard-Raum)
+- [ ] LED zeigt Meeting-Status an
+- [ ] Audio/Video funktioniert automatisch
+- [ ] System startet automatisch nach Boot
+- [ ] Keine Tastatur/Maus nötig für Standard-Workflow
+
+**Extended MVP (v1.0) - Phase 1-7:**
+- [ ] Kalender-Integration (CalDAV)
+- [ ] Web-Admin-Interface für Meeting-Steuerung
+- [ ] Konfiguration über Web-UI
+- [ ] Basic Auth für Web-Zugriff
 
 **Nice-to-Have (v1.1+):**
-- [ ] Kalender-Integration (CalDAV)
 - [ ] Mehrere Buttons für verschiedene Räume
 - [ ] Bluetooth-Speakerphone-Support
-- [ ] Web-Interface für Konfiguration
-- [ ] Multi-Room-Support (mehrere Pis verwalten)
+- [ ] JWT-Authentifizierung für Web-UI
+- [ ] Multi-Room-Support (mehrere Pis zentral verwalten)
 - [ ] OTA-Updates (Over-The-Air)
+- [ ] Mobile App für Meeting-Steuerung
 
 ---
 
@@ -456,11 +508,14 @@ User/System          Orchestrator        GPIO Handler       Browser         BBB 
 | 4-5   | A/V | PulseAudio, Bluetooth, Webcam-Config | Hardware funktioniert |
 | 5-6   | Kiosk | X11-Setup, systemd-Services, Boot-Integration | Auto-Start nach Boot |
 | 6-7   | Config/UX | YAML-Config, Logging, Error-Handling | Produktionsreif |
-| 7-8   | Testing | Unit/Integration-Tests, Hardware-Tests, Docs | 70% Coverage, Docs |
-| 8     | Deploy | Install-Script, SD-Image, Security-Audit | Release v1.0 |
+| 7     | Web UI | FastAPI Backend, HTML/htmx Frontend, Auth | Web-Interface funktioniert |
+| 8     | Testing | Unit/Integration-Tests, Hardware-Tests, Docs | 70% Coverage, Docs |
+| 9     | Deploy | Install-Script, Security-Audit | Release v1.0 |
+| Bonus | SD-Image | Pre-configured Pi OS Image | Flash & Go Image |
 
-**Geschätzte Gesamtzeit:** 8 Wochen (1 Entwickler, Vollzeit)
+**Geschätzte Gesamtzeit:** 9 Wochen (1 Entwickler, Vollzeit) + Bonus-Phase optional
 **Minimum Time-to-Demo:** 2 Wochen (nur Phase 1-2 für Proof-of-Concept)
+**MVP mit Web-UI:** 7 Wochen (Phase 1-7)
 
 ---
 
