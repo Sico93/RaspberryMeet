@@ -179,7 +179,8 @@ python run_web.py
 
 ## 📖 Dokumentation
 
-- **[GPIO_SETUP.md](GPIO_SETUP.md)** - 🔌 **GPIO Hardware-Setup & Verkabelung** (NEU!)
+- **[AUTOSTART.md](AUTOSTART.md)** - 🚀 **Autostart & Systemd-Services** (NEU!)
+- **[GPIO_SETUP.md](GPIO_SETUP.md)** - 🔌 **GPIO Hardware-Setup & Verkabelung**
 - **[WEB_INTERFACE.md](WEB_INTERFACE.md)** - 🌐 **Web Admin Interface Guide**
 - **[RASPBERRY_PI_TEST.md](RASPBERRY_PI_TEST.md)** - 🎯 **Test-Anleitung für Raspberry Pi**
 - **[SETUP.md](docs/SETUP.md)** - Vollständige Installationsanleitung
