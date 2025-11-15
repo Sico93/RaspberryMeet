@@ -8,10 +8,19 @@
 
 ## Project Overview
 
-**RaspberryMeet** is a Raspberry Pi-based meeting board application designed to provide a cost-effective alternative to professional meeting room displays. The system will manage meeting room availability, scheduling, and status display.
+**RaspberryMeet** is a Raspberry Pi 4-based BigBlueButton client that enables simple, one-button meeting room access without requiring keyboard or mouse interaction. The system provides automated calendar-based meeting joins and manual GPIO button access to a default meeting room.
 
 **Project Description (DE):**
 *Ein Meeting Computer, der eine günstige Nachstellung von professionellen Meetingboards abbilden soll.*
+
+**Core Functionality:**
+- **One-Button Join:** GPIO button press joins preconfigured BigBlueButton room
+- **Calendar Integration:** Automatic meeting joins based on CalDAV calendar invitations
+- **Hands-Free Operation:** No keyboard/mouse required for standard workflows
+- **Privacy-First:** Open source components, EU-based hosting (no USA/China services)
+
+**Target Use Case:**
+Power on → Join meeting (button/auto) → Conduct conference → Power off
 
 **Project Status:** GREENFIELD - Initial Setup Phase
 **Initial Commit:** 64ef5e3 (2025-11-15)
@@ -31,155 +40,194 @@
 
 ### What Needs to Be Built
 This is a brand new project. The following components need to be implemented:
-- Backend server for meeting management
-- Frontend UI for display and control
-- Hardware interface layer for Raspberry Pi GPIO/display
-- Database for meeting data
-- Calendar integration (Google Calendar, Outlook, etc.)
-- Configuration management
-- Testing infrastructure
-- Deployment system
+- **Kiosk Application:** Chromium-based browser in kiosk mode for BigBlueButton
+- **Meeting Orchestrator:** Python service managing meeting lifecycle and automation
+- **GPIO Controller:** Hardware interface for physical buttons/LEDs
+- **Calendar Sync:** CalDAV client for privacy-friendly calendar integration
+- **Audio/Video Manager:** PulseAudio/ALSA configuration for conference speakerphone
+- **Auto-Join Logic:** Automatic meeting detection and browser automation
+- **Configuration Management:** Room credentials, BBB server URLs, default meeting settings
+- **Systemd Services:** Boot-time initialization and service management
+
+### Hardware Components
+- **Raspberry Pi 4** (4GB+ recommended)
+- **Conference Speakerphone:** USB or Bluetooth (auto-detected as default audio device)
+- **USB Webcam:** Standard V4L2 compatible camera
+- **GPIO Buttons:** 1-3 buttons for meeting control (join, leave, mute)
+- **Optional LED Indicators:** Status lights for meeting state
+- **Display:** HDMI monitor (1080p recommended)
+- **Network:** Ethernet preferred for stability
+
+### BigBlueButton Infrastructure
+- **BBB Server:** Provided externally (up to 5 rooms available)
+- **Default Room:** Password-protected persistent room for instant access
+- **Calendar Rooms:** Dynamic meeting joins via CalDAV invitations
 
 ---
 
-## Recommended Technology Stack
+## Selected Technology Stack
 
-### Backend Options (Choose One)
-1. **Python + FastAPI** (Recommended)
-   - Excellent Raspberry Pi support
-   - Modern async capabilities
-   - Great GPIO libraries (RPi.GPIO, gpiozero)
-   - Easy API development
-   - Dependencies: `fastapi`, `uvicorn`, `sqlalchemy`, `pydantic`
+### Core Architecture: Kiosk + Orchestrator Pattern
+**Approach:** Similar to PiMeet, but with BigBlueButton instead of Google Meet
 
-2. **Node.js + Express**
-   - Lightweight and fast
-   - Good real-time support with Socket.IO
-   - ARM compatibility
-   - Dependencies: `express`, `socket.io`, `sqlite3`
+**Browser Layer:**
+- **Chromium** in kiosk mode (fullscreen, no UI)
+- **Selenium/Playwright** for browser automation
+- Auto-launch on boot via systemd + X11/Wayland
 
-3. **Go**
-   - Excellent performance on ARM
-   - Single binary deployment
-   - Low memory footprint
-   - Ideal for embedded systems
+**Orchestration Layer:**
+- **Python 3.11+** for meeting orchestrator service
+- **gpiozero** for GPIO button/LED control
+- **caldav** library for CalDAV calendar integration
+- **selenium** or **playwright** for browser automation
+- **schedule** or **APScheduler** for time-based tasks
 
-### Frontend Options (Choose One)
-1. **React** (Recommended)
-   - Modern, component-based
-   - Excellent ecosystem
-   - Real-time updates with WebSocket
-   - Dependencies: `react`, `react-router`, `axios`
+**Audio/Video Stack:**
+- **PulseAudio** for audio routing and device management
+- **v4l2** for webcam configuration
+- **bluez** for Bluetooth speakerphone pairing (if needed)
+- Conference speakerphone set as default PulseAudio sink/source
 
-2. **Vue.js**
-   - Lightweight alternative
-   - Easier learning curve
-   - Good for small teams
+**System Services:**
+- **systemd** for service management and auto-start
+- **Xorg** or **Wayland** for display server
+- **openbox** or minimal window manager for X11 session
 
-3. **Vanilla HTML/CSS/JS**
-   - Minimal overhead
-   - Best for simple displays
-   - No build process needed
+**Configuration:**
+- **YAML/JSON** config files for BBB URLs, credentials, GPIO pins
+- **Environment variables** for secrets (BBB passwords, CalDAV credentials)
+- **SQLite** for meeting history and state persistence (optional)
 
-### Database
-- **SQLite** (Recommended for single device)
-  - No server required
-  - Perfect for Raspberry Pi
-  - Easy backup and migration
+### Calendar Integration (Privacy-First)
+- **CalDAV Protocol** (open standard, no vendor lock-in)
+- Compatible servers:
+  - **Nextcloud** (recommended, EU-hostable)
+  - **Radicale** (lightweight, self-hosted)
+  - **Baikal** (simple CalDAV/CardDAV server)
+  - **SOGo** (groupware alternative)
+- **NO Google Calendar** (USA-based, privacy concerns)
+- **NO Microsoft 365** (USA-based, privacy concerns)
 
-- **PostgreSQL** (For multi-device deployments)
+### BigBlueButton Client
+**Option 1: Browser Automation (Recommended)**
+- Chromium in kiosk mode navigating to BBB URL
+- Selenium/Playwright automates:
+  - Username entry
+  - Password entry (if required)
+  - Microphone/camera permission grants
+  - "Join Audio" button clicks
+- Pros: Native BBB experience, full feature support
+- Cons: Fragile to BBB UI changes
 
-### Hardware Integration (Python)
-- **RPi.GPIO** - Standard GPIO control
-- **gpiozero** - High-level GPIO interface
-- **adafruit-circuitpython** - Advanced sensors/displays
+**Option 2: Greenlight Integration**
+- Use BBB's Greenlight frontend if available
+- Simpler URL structure for direct room access
+- Can use API tokens for authentication
+
+**Option 3: BBB API Direct**
+- Use BigBlueButton API for meeting creation/joins
+- Generate signed join URLs programmatically
+- Requires API secret from BBB server admin
+
+### Hardware Interface
+- **gpiozero** for GPIO control (high-level, clean API)
+- **Button events** trigger meeting join/leave actions
+- **LED indicators** show meeting state (idle/joining/active/error)
+- **Pin assignments** (example):
+  - GPIO 17: Join Default Meeting button
+  - GPIO 27: Leave Meeting button
+  - GPIO 22: Mute/Unmute toggle button
+  - GPIO 23: Status LED (green = ready, red = in meeting, blinking = error)
+
+### Data Privacy & Security
+- **All open source** components (no proprietary software)
+- **EU-based services** where external hosting needed
+- **Local-first** architecture (calendar cache, config files)
+- **Encrypted credentials** storage (keyring or encrypted config)
+- **Network isolation** option (no internet except BBB server)
 
 ### Container & Deployment
-- **Docker** (ARM32v7/ARM64v8 compatible images)
-- **docker-compose** for local development
-- **systemd** for service management on Raspberry Pi
+- **NO Docker** (direct install for better hardware access and lower overhead)
+- **systemd** for service management
+- **Ansible** or **bash scripts** for reproducible deployment
+- **SD card image** for fleet deployment (future consideration)
 
 ---
 
-## Recommended Project Structure
+## Project Structure
 
 ```
 RaspberryMeet/
 ├── .github/
 │   └── workflows/
-│       ├── test.yml           # CI testing pipeline
-│       └── build.yml          # Build ARM images
-├── backend/
-│   ├── app/
+│       └── test.yml                    # CI testing pipeline
+├── src/
+│   ├── orchestrator/                   # Main Python orchestrator service
 │   │   ├── __init__.py
-│   │   ├── main.py            # Application entry point
-│   │   ├── api/               # API endpoints
-│   │   │   ├── __init__.py
-│   │   │   ├── meetings.py
-│   │   │   └── rooms.py
-│   │   ├── models/            # Database models
-│   │   │   ├── __init__.py
-│   │   │   ├── meeting.py
-│   │   │   └── room.py
-│   │   ├── services/          # Business logic
-│   │   │   ├── __init__.py
-│   │   │   ├── calendar.py
-│   │   │   └── hardware.py
-│   │   └── config/            # Configuration
-│   │       ├── __init__.py
-│   │       └── settings.py
-│   ├── tests/
-│   │   ├── test_api.py
-│   │   └── test_services.py
-│   ├── requirements.txt       # Python dependencies
-│   ├── requirements-dev.txt   # Development dependencies
-│   └── pytest.ini             # Test configuration
-├── frontend/
-│   ├── public/
-│   │   ├── index.html
-│   │   └── favicon.ico
-│   ├── src/
-│   │   ├── components/        # React components
-│   │   │   ├── Dashboard.jsx
-│   │   │   ├── MeetingCard.jsx
-│   │   │   └── RoomStatus.jsx
-│   │   ├── services/          # API clients
-│   │   │   └── api.js
-│   │   ├── App.jsx
-│   │   └── index.jsx
-│   ├── package.json
-│   └── vite.config.js         # Build configuration
-├── hardware/
-│   ├── drivers/               # GPIO and display drivers
-│   │   ├── led_controller.py
-│   │   └── display_manager.py
-│   ├── specs/                 # Hardware specifications
-│   │   ├── HARDWARE.md
-│   │   └── wiring.md
-│   └── config/                # Hardware configuration
-│       └── gpio_mapping.json
-├── docs/
-│   ├── ARCHITECTURE.md        # System design
-│   ├── SETUP.md               # Installation guide
-│   ├── API.md                 # API documentation
-│   ├── HARDWARE.md            # Hardware setup guide
-│   └── DEPLOYMENT.md          # Deployment instructions
+│   │   ├── main.py                     # Service entry point
+│   │   ├── meeting_manager.py          # Meeting lifecycle management
+│   │   ├── browser_controller.py       # Selenium/Playwright automation
+│   │   ├── calendar_sync.py            # CalDAV integration
+│   │   ├── gpio_handler.py             # Button/LED GPIO control
+│   │   ├── audio_manager.py            # PulseAudio device configuration
+│   │   └── config.py                   # Configuration management
+│   ├── models/                         # Data models
+│   │   ├── __init__.py
+│   │   ├── meeting.py                  # Meeting representation
+│   │   └── room.py                     # BBB room configuration
+│   └── utils/                          # Utility functions
+│       ├── __init__.py
+│       ├── logger.py                   # Logging configuration
+│       └── validators.py               # Input validation
+├── tests/
+│   ├── unit/
+│   │   ├── test_meeting_manager.py
+│   │   ├── test_calendar_sync.py
+│   │   └── test_gpio_handler.py
+│   ├── integration/
+│   │   ├── test_bbb_join.py
+│   │   └── test_calendar_flow.py
+│   └── fixtures/
+│       └── sample_calendar.ics
+├── config/
+│   ├── config.example.yaml             # Example configuration
+│   ├── default_meeting.yaml            # Default BBB room settings
+│   ├── gpio_pins.yaml                  # GPIO pin assignments
+│   └── audio_devices.yaml              # Audio device preferences
+├── systemd/
+│   ├── raspberrymeet.service           # Main orchestrator service
+│   ├── raspberrymeet-kiosk.service     # Chromium kiosk launcher
+│   └── raspberrymeet-setup.service     # One-time setup on boot
 ├── scripts/
-│   ├── setup.sh               # Initial setup
-│   ├── run_dev.sh             # Development server
-│   ├── deploy.sh              # Deploy to Raspberry Pi
-│   └── test.sh                # Run all tests
-├── docker/
-│   ├── Dockerfile             # Production image
-│   ├── Dockerfile.dev         # Development image
-│   └── docker-compose.yml     # Local development
-├── .gitignore                 # Git ignore patterns
-├── .editorconfig              # Editor configuration
-├── .env.example               # Environment variables template
-├── LICENSE                    # Open source license
-├── README.md                  # Project overview
-├── CLAUDE.md                  # This file
-└── CONTRIBUTING.md            # Contribution guidelines
+│   ├── install.sh                      # Initial installation script
+│   ├── setup_audio.sh                  # Configure PulseAudio
+│   ├── setup_display.sh                # Configure X11/kiosk mode
+│   ├── pair_bluetooth.sh               # Bluetooth speaker pairing
+│   ├── test_hardware.sh                # Hardware test utility
+│   └── update.sh                       # Update deployment
+├── docs/
+│   ├── ARCHITECTURE.md                 # System architecture
+│   ├── SETUP.md                        # Installation guide
+│   ├── HARDWARE.md                     # Hardware setup & wiring
+│   ├── CALDAV_SETUP.md                 # CalDAV server configuration
+│   ├── BBB_SERVER.md                   # BigBlueButton server setup
+│   ├── TROUBLESHOOTING.md              # Common issues & solutions
+│   └── USER_GUIDE.md                   # End-user instructions (DE/EN)
+├── hardware/
+│   ├── wiring_diagram.png              # GPIO wiring diagram
+│   ├── button_schematic.pdf            # Button circuit schematic
+│   └── parts_list.md                   # Bill of materials
+├── requirements.txt                    # Python production dependencies
+├── requirements-dev.txt                # Development dependencies
+├── pytest.ini                          # Pytest configuration
+├── .env.example                        # Environment variables template
+├── .gitignore                          # Git ignore patterns
+├── .editorconfig                       # Editor configuration
+├── LICENSE                             # Open source license (MIT/GPL)
+├── README.md                           # Project overview
+├── README.de.md                        # German README
+├── CLAUDE.md                           # This file
+└── CONTRIBUTING.md                     # Contribution guidelines
 ```
 
 ---
@@ -611,11 +659,17 @@ sudo systemctl start raspberrymeet
 Never commit sensitive data. Use `.env` files:
 ```
 # .env.example
-DATABASE_URL=sqlite:///./data/meetings.db
-API_KEY=your-api-key-here
-CALENDAR_CLIENT_ID=your-google-client-id
-CALENDAR_CLIENT_SECRET=your-google-client-secret
-SECRET_KEY=your-secret-key-for-jwt
+BBB_SERVER_URL=https://bbb.example.eu/bigbluebutton/
+BBB_API_SECRET=your-bbb-api-secret-here
+BBB_DEFAULT_ROOM_URL=https://bbb.example.eu/b/room-abc-def
+BBB_DEFAULT_ROOM_PASSWORD=secure-room-password
+
+CALDAV_URL=https://nextcloud.example.eu/remote.php/dav
+CALDAV_USERNAME=meeting-room-1@example.eu
+CALDAV_PASSWORD=secure-caldav-password
+
+LOG_LEVEL=INFO
+ENVIRONMENT=production
 ```
 
 ### GPIO Security
@@ -697,15 +751,42 @@ SECRET_KEY=your-secret-key-for-jwt
 4. Add GPIO pin mapping to config
 5. Write tests with mocked GPIO
 
+### BigBlueButton-Specific Considerations
+
+**BBB Server Configuration:**
+- Request BBB server URL and API secret from server administrator
+- Test room access before deployment
+- Configure default room with password protection
+- Map calendar meetings to BBB room names/URLs
+
+**Browser Automation Challenges:**
+- BBB UI may change between versions - keep selectors flexible
+- Handle permission prompts (microphone, camera) programmatically
+- Implement retry logic for network issues
+- Monitor for BBB error messages and handle gracefully
+
+**Audio/Video Device Management:**
+- Ensure conference speakerphone is detected before joining
+- Fall back to HDMI audio if preferred device unavailable
+- Test echo cancellation and noise suppression settings
+- Validate camera is functional before meeting join
+
+**GPIO Button Behavior:**
+- Short press: Join default meeting
+- Long press (3s): Show configuration menu (optional)
+- Double-press: Mute/unmute toggle
+- LED feedback: Immediate visual confirmation
+
 ### Questions to Ask
 
 Before implementing features, consider asking:
-- What hardware will be used? (Display size, GPIO pins needed)
-- Which calendar service to integrate? (Google, Outlook, CalDAV)
-- Authentication requirements? (None, basic auth, OAuth)
-- Deployment target? (Single Pi, multiple devices, cloud-connected)
-- Language preference? (German, English, both)
-- Display mode? (Kiosk mode, windowed, web-only)
+- **BBB Server Details:** URL, API secret, available rooms?
+- **CalDAV Server:** Nextcloud, Radicale, or other? Self-hosted or provider?
+- **GPIO Layout:** How many buttons? Which pins? What LED colors?
+- **Conference Device:** USB or Bluetooth? Specific model?
+- **Auto-Join Behavior:** On boot, or wait for button/calendar?
+- **Language:** German UI, English UI, or both?
+- **Network:** Static IP or DHCP? WiFi or Ethernet?
 
 ---
 
@@ -744,32 +825,68 @@ PRAGMA journal_mode=WAL;
 ## Resources and Documentation
 
 ### Official Documentation
+- **BigBlueButton:** https://docs.bigbluebutton.org/
+- **BigBlueButton API:** https://docs.bigbluebutton.org/dev/api.html
 - **Raspberry Pi:** https://www.raspberrypi.org/documentation/
-- **FastAPI:** https://fastapi.tiangolo.com/
-- **React:** https://react.dev/
-- **RPi.GPIO:** https://sourceforge.net/p/raspberry-gpio-python/wiki/Home/
+- **gpiozero:** https://gpiozero.readthedocs.io/
+- **Selenium Python:** https://selenium-python.readthedocs.io/
+- **Playwright Python:** https://playwright.dev/python/
 
 ### Useful Libraries
+- **Browser Automation:**
+  - `selenium` - Browser automation (stable, widely used)
+  - `playwright` - Modern browser automation (faster, more reliable)
+  - `undetected-chromedriver` - Avoid bot detection
+
 - **Calendar Integration:**
-  - Google Calendar API: `google-api-python-client`
-  - Microsoft Graph: `msal` + `requests`
+  - `caldav` - CalDAV protocol client
+  - `icalendar` - iCalendar parsing
+  - `vobject` - vCard/iCalendar library
 
-- **Display/Graphics:**
-  - `pygame` - For custom displays
-  - `pillow` - Image processing
+- **Audio/Video:**
+  - `pulsectl` - PulseAudio control from Python
+  - `pyalsaaudio` - ALSA audio interface
+  - `v4l2-python` - Video4Linux2 camera control
 
-- **Database:**
-  - `sqlalchemy` - ORM
-  - `alembic` - Database migrations
+- **GPIO Control:**
+  - `gpiozero` - High-level GPIO interface (recommended)
+  - `RPi.GPIO` - Low-level GPIO library
+  - `pigpio` - Advanced GPIO with PWM support
+
+- **Scheduling:**
+  - `APScheduler` - Advanced Python scheduler
+  - `schedule` - Simple job scheduling
+
+### CalDAV Servers (Privacy-Friendly)
+- **Nextcloud:** https://nextcloud.com/ (full groupware, EU-hostable)
+- **Radicale:** https://radicale.org/ (minimal, Python-based)
+- **Baikal:** https://sabre.io/baikal/ (lightweight PHP)
+- **SOGo:** https://sogo.nu/ (enterprise groupware)
 
 ### Learning Resources
 - Raspberry Pi GPIO basics: https://www.raspberrypi-spy.co.uk/
-- FastAPI tutorial: https://fastapi.tiangolo.com/tutorial/
-- React hooks: https://react.dev/reference/react
+- BigBlueButton development: https://docs.bigbluebutton.org/dev/guide.html
+- CalDAV protocol: https://datatracker.ietf.org/doc/html/rfc4791
+- Selenium best practices: https://www.selenium.dev/documentation/test_practices/
+- Kiosk mode setup: https://pimylifeup.com/raspberry-pi-kiosk/
+
+### Reference Projects
+- **pimeet:** https://github.com/pmansour/pimeet (Google Meet automation on Pi)
+- **BigBlueButton HTML5 Client:** https://github.com/bigbluebutton/bigbluebutton-html5
 
 ---
 
 ## Changelog
+
+### 2025-11-15 - BigBlueButton Specification
+- Updated CLAUDE.md with BigBlueButton-specific requirements
+- Defined kiosk + orchestrator architecture pattern
+- Specified CalDAV integration for privacy compliance
+- Documented GPIO button interface design
+- Added hardware specifications (Pi 4, conference phone, webcam)
+- Established EU-only/open-source technology constraints
+- Created detailed project structure for BBB client
+- Documented browser automation approaches
 
 ### 2025-11-15 - Initial Setup
 - Created CLAUDE.md with comprehensive project guidelines
