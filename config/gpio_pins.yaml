@@ -1,0 +1,54 @@
+# GPIO Pin Assignments for Raspberry Pi 4
+# BCM numbering mode
+
+# Physical Pin Reference:
+# GPIO 17 = Pin 11
+# GPIO 27 = Pin 13
+# GPIO 22 = Pin 15
+# GPIO 23 = Pin 16
+# GPIO 24 = Pin 18
+
+buttons:
+  join_default_meeting:
+    gpio_bcm: 17
+    physical_pin: 11
+    description: "Join default BBB room"
+    action: "join_default"
+
+  leave_meeting:
+    gpio_bcm: 27
+    physical_pin: 13
+    description: "Leave current meeting"
+    action: "leave_meeting"
+
+  mute_toggle:
+    gpio_bcm: 22
+    physical_pin: 15
+    description: "Toggle microphone mute"
+    action: "toggle_mute"
+
+leds:
+  status_ready:
+    gpio_bcm: 23
+    physical_pin: 16
+    color: "green"
+    description: "Ready to join / idle state"
+
+  status_active:
+    gpio_bcm: 24
+    physical_pin: 18
+    color: "red"
+    description: "In active meeting"
+
+  # Optional: Error indicator
+  # status_error:
+  #   gpio_bcm: 25
+  #   physical_pin: 22
+  #   color: "yellow"
+  #   description: "Error state"
+
+wiring:
+  note: "All buttons use internal pull-up resistors"
+  button_schematic: "Button -> GPIO Pin -> GND"
+  led_schematic: "GPIO Pin -> LED (Anode) -> 220Ω Resistor -> GND"
+  ground_pins: [6, 9, 14, 20, 25, 30, 34, 39]

@@ -1,0 +1,51 @@
+# Audio Device Preferences
+
+# Preferred devices in priority order
+devices:
+  - name: "Jabra Speak 510"
+    priority: 1
+    type: "usb"
+    auto_detect_patterns:
+      - "Jabra"
+      - "Speak 510"
+    notes: "USB speakerphone with echo cancellation"
+
+  - name: "Anker PowerConf"
+    priority: 2
+    type: "usb"
+    auto_detect_patterns:
+      - "Anker"
+      - "PowerConf"
+    notes: "USB conference speaker"
+
+  - name: "eMeet M2"
+    priority: 3
+    type: "usb"
+    auto_detect_patterns:
+      - "eMeet"
+      - "M2"
+    notes: "Budget USB speakerphone"
+
+  - name: "HDMI Audio"
+    priority: 10
+    type: "hdmi"
+    auto_detect_patterns:
+      - "HDMI"
+      - "bcm2835"
+    notes: "Fallback to monitor speakers"
+
+# PulseAudio configuration
+pulseaudio:
+  auto_switch: true
+  prefer_usb: true
+  sample_rate: 48000
+  channels: 2
+
+# Bluetooth devices (optional)
+bluetooth:
+  enabled: false
+  auto_connect: true
+  devices:
+    - name: "Bluetooth Speakerphone"
+      mac_address: "00:11:22:33:44:55"
+      priority: 5

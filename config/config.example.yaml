@@ -1,0 +1,129 @@
+# RaspberryMeet Configuration Example
+# Copy this to config.yaml and customize for your setup
+
+bigbluebutton:
+  server_url: "https://bbb.example.eu/bigbluebutton/"
+  api_secret: "${BBB_API_SECRET}"  # From .env
+
+  default_room:
+    room_id: "default-room"
+    url: "https://bbb.example.eu/b/default-room"
+    password: "${BBB_DEFAULT_ROOM_PASSWORD}"
+    username: "RaspberryMeet-Room-1"
+    moderator: false
+
+  # Additional preconfigured rooms
+  rooms:
+    - name: "Meeting Room 1"
+      room_id: "meeting-room-1"
+      url: "https://bbb.example.eu/b/room-1"
+      password: "room1-password"
+
+    - name: "Meeting Room 2"
+      room_id: "meeting-room-2"
+      url: "https://bbb.example.eu/b/room-2"
+      password: "room2-password"
+
+calendar:
+  enabled: true
+  provider: "caldav"  # caldav, nextcloud, radicale
+
+  caldav:
+    url: "${CALDAV_URL}"
+    username: "${CALDAV_USERNAME}"
+    password: "${CALDAV_PASSWORD}"
+    calendar_name: "Meetings"
+    sync_interval_minutes: 5
+
+  # Auto-join settings
+  auto_join:
+    enabled: true
+    minutes_before_start: 1
+    auto_leave_on_end: true
+
+gpio:
+  enabled: true
+  pin_mode: "BCM"  # BCM or BOARD numbering
+
+  buttons:
+    join_default:
+      pin: 17
+      pull_up: true
+      bounce_time: 0.5  # seconds
+
+    leave_meeting:
+      pin: 27
+      pull_up: true
+      bounce_time: 0.5
+
+    mute_toggle:
+      pin: 22
+      pull_up: true
+      bounce_time: 0.5
+
+  leds:
+    status_green:
+      pin: 23
+      active_high: true
+
+    status_red:
+      pin: 24
+      active_high: true
+
+audio:
+  preferred_device: "Jabra Speak 510"
+  fallback_to_hdmi: true
+  auto_select_device: true
+
+  devices:
+    - name: "Jabra Speak 510"
+      priority: 1
+    - name: "HDMI Audio"
+      priority: 2
+
+video:
+  device: "/dev/video0"
+  auto_select_device: true
+  resolution: "1920x1080"
+  framerate: 30
+
+web:
+  enabled: true
+  host: "0.0.0.0"
+  port: 8080
+  debug: false
+
+  auth:
+    type: "basic"  # basic, jwt
+    username: "${WEB_USERNAME}"
+    password: "${WEB_PASSWORD}"
+
+  cors:
+    enabled: true
+    allowed_origins:
+      - "http://localhost:*"
+      - "http://192.168.*:*"
+
+kiosk:
+  enabled: true
+  fullscreen: true
+  auto_launch: true
+
+  chromium_args:
+    - "--kiosk"
+    - "--autoplay-policy=no-user-gesture-required"
+    - "--use-fake-ui-for-media-stream"
+    - "--disable-infobars"
+    - "--noerrdialogs"
+
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  file: "/var/log/raspberrymeet/app.log"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+system:
+  timezone: "Europe/Berlin"
+  auto_update: false
+  health_check_interval: 60  # seconds
