@@ -11,6 +11,8 @@ from typing import Optional
 from src.orchestrator.browser_controller import BrowserController
 from src.orchestrator.gpio_handler import GPIOHandler, LEDState
 from src.orchestrator.audio_manager import AudioVideoManager
+from src.orchestrator.calendar_scheduler import CalendarScheduler
+from src.orchestrator.calendar_sync import MeetingEvent
 from src.utils.config import AppConfig
 from src.utils.logger import setup_logger
 
@@ -47,10 +49,12 @@ class MeetingManager:
         self.browser: Optional[BrowserController] = None
         self.gpio: Optional[GPIOHandler] = None
         self.audio: Optional[AudioVideoManager] = None
+        self.calendar: Optional[CalendarScheduler] = None
 
         # State
         self.state = MeetingState.IDLE
         self.current_room_url: Optional[str] = None
+        self.current_meeting_event: Optional[MeetingEvent] = None
         self.meeting_start_time: Optional[datetime] = None
 
         # Lock for state transitions
@@ -91,6 +95,18 @@ class MeetingManager:
         if self.gpio:
             self.gpio.set_led_state(LEDState.GREEN)
 
+        # Initialize calendar scheduler
+        if self.config.caldav.enabled:
+            logger.info("Initializing calendar scheduler...")
+            self.calendar = CalendarScheduler(
+                caldav_config=self.config.caldav,
+                on_meeting_start=self._handle_calendar_meeting_start
+            )
+            await self.calendar.start()
+            logger.info("Calendar scheduler started")
+        else:
+            logger.info("CalDAV disabled - calendar sync not available")
+
         logger.info("Meeting manager started successfully")
 
     async def stop(self):
@@ -102,6 +118,9 @@ class MeetingManager:
             await self.leave_meeting()
 
         # Cleanup components
+        if self.calendar:
+            await self.calendar.stop()
+
         if self.browser:
             await self.browser.cleanup()
 
@@ -112,6 +131,25 @@ class MeetingManager:
             self.audio.cleanup()
 
         logger.info("Meeting manager stopped")
+
+    async def _handle_calendar_meeting_start(self, event: MeetingEvent):
+        """
+        Handle automatic meeting start from calendar.
+
+        Args:
+            event: Calendar meeting event to join
+        """
+        async with self._state_lock:
+            logger.info(f"Calendar trigger: Auto-joining meeting '{event.summary}'")
+
+            if self.state != MeetingState.IDLE:
+                logger.warning(
+                    f"Cannot auto-join calendar meeting - not idle (state: {self.state})"
+                )
+                return
+
+            # Join the calendar meeting
+            await self.join_calendar_meeting(event)
 
     async def _handle_join_leave_button(self):
         """
@@ -149,6 +187,30 @@ class MeetingManager:
             room_url=self.config.bbb.default_room_url,
             username=self.config.bbb.default_username,
             password=self.config.bbb.default_room_password,
+        )
+
+    async def join_calendar_meeting(self, event: MeetingEvent) -> bool:
+        """
+        Join a BigBlueButton meeting from calendar event.
+
+        Args:
+            event: Calendar meeting event
+
+        Returns:
+            True if successfully joined, False otherwise
+        """
+        if not event.bbb_url:
+            logger.error(f"Calendar event '{event.summary}' has no BBB URL")
+            return False
+
+        # Store calendar event
+        self.current_meeting_event = event
+
+        # Join using event details
+        return await self.join_meeting(
+            room_url=event.bbb_url,
+            username=self.config.bbb.default_username,
+            password=event.bbb_password or self.config.bbb.default_room_password,
         )
 
     async def join_meeting(
@@ -255,6 +317,7 @@ class MeetingManager:
             # Successfully left
             self.state = MeetingState.IDLE
             self.current_room_url = None
+            self.current_meeting_event = None
             self.meeting_start_time = None
 
             # Update LED to green (ready)
@@ -283,6 +346,7 @@ class MeetingManager:
             logger.info("Auto-resetting from error state to idle")
             self.state = MeetingState.IDLE
             self.current_room_url = None
+            self.current_meeting_event = None
             self.meeting_start_time = None
 
             if self.gpio:
@@ -293,11 +357,26 @@ class MeetingManager:
         Get current meeting status.
 
         Returns:
-            Status dictionary with state, room, duration, etc.
+            Status dictionary with state, room, duration, calendar info, etc.
         """
         duration = None
         if self.meeting_start_time and self.state == MeetingState.ACTIVE:
             duration = int((datetime.now() - self.meeting_start_time).total_seconds())
+
+        # Calendar info
+        calendar_status = None
+        if self.calendar and self.config.caldav.enabled:
+            calendar_status = self.calendar.get_status()
+
+        # Current meeting event info
+        meeting_event_info = None
+        if self.current_meeting_event:
+            meeting_event_info = {
+                "summary": self.current_meeting_event.summary,
+                "start_time": self.current_meeting_event.start_time.isoformat(),
+                "end_time": self.current_meeting_event.end_time.isoformat(),
+                "organizer": self.current_meeting_event.organizer,
+            }
 
         return {
             "state": self.state.value,
@@ -305,6 +384,8 @@ class MeetingManager:
             "meeting_duration": duration,
             "gpio_enabled": self.config.gpio.enabled,
             "led_state": self.gpio.current_led_state.value if self.gpio else None,
+            "calendar": calendar_status,
+            "current_meeting_event": meeting_event_info,
         }
 
     async def __aenter__(self):
