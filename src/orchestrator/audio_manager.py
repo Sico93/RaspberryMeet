@@ -62,9 +62,11 @@ class AudioVideoManager:
             preferred_devices: List of preferred device names (in priority order)
         """
         self.preferred_devices = preferred_devices or [
+            "Logitech BCC950",      # Logitech BCC950 ConferenceCam (All-in-One)
             "Jabra Speak 510",
             "Anker PowerConf",
             "eMeet M2",
+            "Logitech",             # Generic Logitech devices
             "HDMI Audio",
         ]
 

@@ -171,8 +171,9 @@ Drücken Sie den Join-Button → Meeting startet sofort
 | Komponente | Beispiel | Hinweise |
 |------------|----------|----------|
 | **Computer** | Raspberry Pi 4 (4GB) | Erforderlich |
-| **Freisprecheinrichtung** | Jabra Speak 510 | USB oder Bluetooth |
-| **Webcam** | Logitech C920 | 1080p empfohlen |
+| **ConferenceCam** | Logitech BCC950 ⭐ | All-in-One Webcam + Freisprecheinrichtung (empfohlen) |
+| **Freisprecheinrichtung** | Jabra Speak 510 | USB oder Bluetooth Alternative |
+| **Webcam** | Logitech C920 | 1080p empfohlen (bei separatem Gerät) |
 | **Display** | Beliebiger HDMI-Monitor | 1920x1080 empfohlen |
 | **Button** | Taktiler Druckknopf | GPIO 17 (Standard) |
 | **LEDs** | Grün + Rot LEDs | GPIO 23/24 (Standard) |

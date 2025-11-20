@@ -16,12 +16,14 @@ RaspberryMeet bietet automatische Erkennung und Konfiguration von:
 ### Unterstützte Geräte
 
 **Empfohlene Konferenz-Speakerphones:**
+- **Logitech BCC950 ConferenceCam** (USB - All-in-One Webcam + Speakerphone) ⭐ **Empfohlen**
 - Jabra Speak 510 (USB/Bluetooth)
 - Anker PowerConf (USB/Bluetooth)
 - eMeet M2 (USB/Bluetooth)
-- Logitech (verschiedene Modelle)
+- Logitech (verschiedene andere Modelle)
 
 **Webcams:**
+- **Logitech BCC950** (integriert in ConferenceCam) ⭐ **Empfohlen**
 - Alle V4L2-kompatiblen USB-Webcams
 - Logitech C920, C922, C930e
 - Raspberry Pi Camera Module (mit Adapter)
@@ -244,12 +246,13 @@ done
 Der `AudioVideoManager` wählt Geräte automatisch basierend auf Priorität:
 
 **Priorität (höchste zuerst):**
-1. Jabra Speak 510
-2. Anker PowerConf
-3. eMeet M2
-4. Logitech (verschiedene)
-5. HDMI Audio (Fallback)
-6. Erstes verfügbares Gerät
+1. **Logitech BCC950** (ConferenceCam - All-in-One)
+2. Jabra Speak 510
+3. Anker PowerConf
+4. eMeet M2
+5. Logitech (andere Modelle)
+6. HDMI Audio (Fallback)
+7. Erstes verfügbares Gerät
 
 **Code-Beispiel:**
 ```python
@@ -277,6 +280,7 @@ In `config/audio_devices.yaml`:
 
 ```yaml
 preferred_devices:
+  - Logitech BCC950        # All-in-One ConferenceCam (empfohlen)
   - Jabra Speak 510
   - Anker PowerConf
   - Your Custom Device Name
@@ -287,6 +291,7 @@ Oder in Code:
 
 ```python
 audio = AudioVideoManager(preferred_devices=[
+    "Logitech BCC950",     # All-in-One device (recommended)
     "My Speakerphone",
     "HDMI Audio",
 ])
