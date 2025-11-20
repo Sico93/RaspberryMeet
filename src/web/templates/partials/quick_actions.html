@@ -1,0 +1,24 @@
+{% if state in ['idle', 'error'] %}
+    <button hx-post="/api/meeting/join-default"
+            hx-trigger="click"
+            hx-target="#join-result"
+            hx-indicator="#default-spinner"
+            class="btn btn-success btn-lg btn-block">
+        <span id="default-spinner" class="spinner htmx-indicator"></span>
+        🚀 Standard-Meeting beitreten
+    </button>
+{% elif state == 'active' %}
+    <button hx-post="/api/meeting/leave"
+            hx-trigger="click"
+            hx-target="#join-result"
+            hx-indicator="#leave-spinner"
+            class="btn btn-danger btn-lg btn-block">
+        <span id="leave-spinner" class="spinner htmx-indicator"></span>
+        👋 Meeting verlassen
+    </button>
+{% else %}
+    <button class="btn btn-secondary btn-lg btn-block" disabled>
+        <span class="spinner"></span>
+        Bitte warten...
+    </button>
+{% endif %}

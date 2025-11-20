@@ -1,0 +1,39 @@
+[Unit]
+Description=RaspberryMeet Web Admin Interface
+Documentation=https://github.com/Sico93/RaspberryMeet
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/RaspberryMeet
+
+# Environment
+Environment="PATH=/home/pi/RaspberryMeet/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+EnvironmentFile=/home/pi/RaspberryMeet/.env
+
+# Start the web interface
+ExecStart=/home/pi/RaspberryMeet/venv/bin/python run_web.py
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Resource limits
+MemoryMax=512M
+CPUQuota=50%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=raspberrymeet-web
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

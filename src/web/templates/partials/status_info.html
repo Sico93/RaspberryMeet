@@ -1,0 +1,28 @@
+{% set state_labels = {
+    'idle': 'Bereit',
+    'joining': 'Trete bei',
+    'active': 'Im Meeting',
+    'leaving': 'Verlasse',
+    'error': 'Fehler'
+} %}
+
+<div class="status-item">
+    <div class="status-label">Status</div>
+    <div class="status-value">{{ state_labels.get(state, state) }}</div>
+</div>
+
+<div class="status-item">
+    <div class="status-label">Aktueller Raum</div>
+    <div class="status-value" style="font-size: 0.875rem;">
+        {% if current_room %}
+            {{ current_room[:50] }}{% if current_room|length > 50 %}...{% endif %}
+        {% else %}
+            -
+        {% endif %}
+    </div>
+</div>
+
+<div class="status-item">
+    <div class="status-label">Meeting-Dauer</div>
+    <div class="status-value">-</div>
+</div>

@@ -1,0 +1,44 @@
+[Unit]
+Description=RaspberryMeet Kiosk Browser
+Documentation=https://github.com/Sico93/RaspberryMeet
+After=graphical.target network-online.target raspberrymeet.service
+Wants=graphical.target network-online.target
+Requires=raspberrymeet.service
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/RaspberryMeet
+
+# Display environment
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/pi/.Xauthority"
+Environment="RASPBERRYMEET_DIR=/home/pi/RaspberryMeet"
+Environment="KIOSK_INITIAL_URL=about:blank"
+
+# Start kiosk browser launcher script
+ExecStart=/home/pi/RaspberryMeet/scripts/launch_kiosk_browser.sh
+
+# Stop command
+ExecStop=/usr/bin/pkill -f chromium-browser
+
+# Restart policy
+Restart=always
+RestartSec=10
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=90%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=raspberrymeet-kiosk
+
+[Install]
+WantedBy=graphical.target

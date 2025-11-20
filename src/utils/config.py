@@ -36,6 +36,9 @@ class CalDAVConfig(BaseModel):
     password: Optional[str] = Field(None, description="CalDAV password")
     calendar_name: str = Field(default="Meetings", description="Calendar name")
     sync_interval_minutes: int = Field(default=5, description="Sync interval")
+    auto_join_enabled: bool = Field(default=True, description="Enable automatic meeting joins")
+    join_before_minutes: int = Field(default=2, description="Join meeting X minutes before start")
+    check_interval_seconds: int = Field(default=30, description="Check for upcoming meetings every X seconds")
 
 
 class WebConfig(BaseModel):
@@ -46,6 +49,7 @@ class WebConfig(BaseModel):
     username: str = Field(default="admin", description="Admin username")
     password: str = Field(default="admin", description="Admin password")
     secret_key: str = Field(default="change-me", description="JWT secret key")
+    headless_browser: bool = Field(default=False, description="Run browser in headless mode")
 
 
 class GPIOConfig(BaseModel):
@@ -113,6 +117,9 @@ def load_config() -> AppConfig:
         password=os.getenv("CALDAV_PASSWORD"),
         calendar_name=os.getenv("CALDAV_CALENDAR_NAME", "Meetings"),
         sync_interval_minutes=int(os.getenv("CALDAV_SYNC_INTERVAL_MINUTES", "5")),
+        auto_join_enabled=os.getenv("CALDAV_AUTO_JOIN_ENABLED", "true").lower() == "true",
+        join_before_minutes=int(os.getenv("CALDAV_JOIN_BEFORE_MINUTES", "2")),
+        check_interval_seconds=int(os.getenv("CALDAV_CHECK_INTERVAL_SECONDS", "30")),
     )
 
     # Build Web config
@@ -123,6 +130,7 @@ def load_config() -> AppConfig:
         username=os.getenv("WEB_USERNAME", "admin"),
         password=os.getenv("WEB_PASSWORD", "admin"),
         secret_key=os.getenv("WEB_SECRET_KEY", "change-me"),
+        headless_browser=os.getenv("WEB_HEADLESS_BROWSER", "false").lower() == "true",
     )
 
     # Build GPIO config
